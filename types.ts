@@ -1,26 +1,25 @@
-// Fix: Create type definitions used throughout the application.
-
+// Fix: Create types.ts to define all shared types.
 export interface Badge {
     id: string;
     title: string;
     icon: string;
-    color: 'cyan' | 'pink' | 'lime' | 'purple';
+    color: 'cyan' | 'pink' | 'lime' | 'purple' | 'yellow' | 'orange';
 }
 
 export interface Effect {
     id: string;
     name: string;
     description: string;
+    value: number;
     expires_at: string; // ISO string
-    value?: number;
-    duration_hours?: number;
+    duration_hours: number;
 }
 
 export interface ItemEffect {
     name: string;
     description: string;
-    value?: number;
-    duration_hours?: number;
+    value: number;
+    duration_hours: number;
 }
 
 export interface Item {
@@ -50,6 +49,8 @@ export interface Profile {
     stamina_max: number;
 }
 
+export type TaskStatus = 'available' | 'in_progress' | 'completed' | 'claimed' | 'expired' | 'failed' | 'accepted';
+
 export interface TaskTemplate {
     id: string;
     title: string;
@@ -58,46 +59,36 @@ export interface TaskTemplate {
     reward_coins: number;
     reward_xp: number;
     needed_for_completion: number;
-    duration_seconds?: number;
-}
-
-export interface TaskProgress {
-    current: number;
-    needed: number;
 }
 
 export interface FullUserTask {
     id: string;
     user_id: string;
     template: TaskTemplate;
-    status: 'available' | 'in_progress' | 'completed' | 'claimed' | 'expired' | 'failed';
-    progress: TaskProgress | null;
+    status: TaskStatus;
+    progress: {
+        current: number;
+        needed: number;
+    };
     accepted_at: string | null;
     completed_at: string | null;
 }
 
-export interface HackParticipant {
-    id: string;
-    username: string;
-}
-
-export interface Loot {
-    coins: number;
-    xp: number;
-}
-
 export interface HackAttempt {
     id: string;
-    attacker: HackParticipant;
-    defender: HackParticipant;
+    attacker: { id: string; username: string };
+    defender: { id: string; username: string };
     win: boolean;
     created_at: string; // ISO string
-    loot?: Loot;
+    loot?: {
+        coins: number;
+        xp: number;
+    };
 }
 
 export interface LiveFeedEvent {
     id: string;
-    type: 'hack' | 'task' | 'purchase' | 'level_up';
-    timestamp: string;
+    type: 'hack' | 'task_complete' | 'purchase' | 'level_up';
+    timestamp: string; // ISO string
     message: string;
 }

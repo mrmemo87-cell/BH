@@ -1,10 +1,11 @@
+
 import React, { useState } from 'react';
 import { useSound } from '../hooks/useSound';
 import {
     getAuth,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
-    AuthErrorCodes
+    FirebaseError,
 } from 'firebase/auth';
 import * as firestoreService from '../services/firestoreService';
 
@@ -22,38 +23,42 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     const auth = getAuth();
 
     const signInOrSignUp = async () => {
-        const email = `${username.toLowerCase()}@brain.heist`; // Construct an email from username
+        const email = `${username.toLowerCase().trim()}@brain.heist`;
         setLoading(true);
         setError('');
 
         try {
-            // Try to sign in first
             await signInWithEmailAndPassword(auth, email, password);
             playLoginSound();
-        } catch (signInError: any) {
-            // If user not found, try to create a new account
-            if (signInError.code === AuthErrorCodes.USER_DELETED) {
-                 try {
+        } catch (signInError) {
+            if (signInError instanceof FirebaseError && signInError.code === 'auth/invalid-credential') {
+                // User might not exist, so try to create an account
+                try {
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                    // Create a profile in Firestore for the new user
                     await firestoreService.createUserProfile(userCredential.user.uid, username, username);
                     playLoginSound();
-                 } catch (signUpError: any) {
-                    setError(signUpError.message);
+                } catch (signUpError) {
+                    // If sign up fails, the user likely exists and entered the wrong password
+                    setError('Invalid credentials or sign-up failed. Check password.');
                     playErrorSound();
-                 }
+                }
             } else {
-                 setError("Invalid credentials or network error.");
-                 playErrorSound();
+                // Handle other errors (network, etc.)
+                setError('An unexpected error occurred. Please try again.');
+                playErrorSound();
             }
         } finally {
             setLoading(false);
         }
     };
 
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!username.trim() || !password.trim()) {
+            setError("Username and password cannot be empty.");
+            playErrorSound();
+            return;
+        }
         if (password.length < 6) {
             setError("Password must be at least 6 characters.");
             playErrorSound();

@@ -1,33 +1,18 @@
-
+// Fix: Create missing TaskDetailPanel component.
 import React from 'react';
 import { FullUserTask } from '../types';
 import NeonCard from './NeonCard';
-import { CoinIcon, XPIcon, ClockIcon } from './icons';
+import { CoinIcon, XPIcon } from './icons';
 import TaskProgressBar from './TaskProgressBar';
 import TaskActionButton from './TaskActionButton';
 import { useSound } from '../hooks/useSound';
 
 interface TaskDetailPanelProps {
     task?: FullUserTask;
-    onAccept: (taskId: string) => Promise<void>;
-    onClaim: (taskId: string) => Promise<void>;
+    onAccept: (taskId: string) => void;
+    onClaim: (taskId: string) => void;
     loadingAction: string | null;
 }
-
-const TaskTypeBadge: React.FC<{ type: string }> = ({ type }) => {
-    const typeStyles: Record<string, string> = {
-        daily: 'border-[var(--neon-cyan)] text-[var(--neon-cyan)]',
-        weekly: 'border-[var(--neon-lime)] text-[var(--neon-lime)]',
-        challenge: 'border-[var(--neon-pink)] text-[var(--neon-pink)]',
-        batch: 'border-[var(--neon-purple)] text-[var(--neon-purple)]',
-        oneoff: 'border-gray-500 text-gray-300',
-    };
-    return (
-        <span className={`px-3 py-1 text-xs font-bold border rounded-full ${typeStyles[type] || 'border-gray-500'}`}>
-            {type.toUpperCase()}
-        </span>
-    );
-};
 
 const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({ task, onAccept, onClaim, loadingAction }) => {
     const playAcceptSound = useSound('accept');
@@ -35,92 +20,75 @@ const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({ task, onAccept, onCla
 
     if (!task) {
         return (
-            <div className="flex items-center justify-center h-full text-gray-600">
-                <p>Select a task to see details</p>
+            <div className="p-8 flex items-center justify-center h-full text-gray-500">
+                <p>Select a task to view details.</p>
             </div>
         );
     }
-    
-    const handleAccept = async () => {
-        await onAccept(task.id);
+
+    const handleAccept = () => {
         playAcceptSound();
-    };
+        onAccept(task.id);
+    }
 
-    const handleClaim = async () => {
-        await onClaim(task.id);
+    const handleClaim = () => {
         playClaimSound();
-    };
+        onClaim(task.id);
+    }
 
-    const isActionLoading = (action: string) => loadingAction === `${action}-${task.id}`;
-
-    const renderAction = () => {
+    const getAction = () => {
+        const isLoading = loadingAction?.includes(task.id);
         switch (task.status) {
             case 'available':
-                return <TaskActionButton onClick={handleAccept} label="Accept Task" loading={isActionLoading('accept')} />;
+                return <TaskActionButton onClick={handleAccept} label="Accept Task" loading={!!isLoading} />;
+            case 'in_progress':
+                return <TaskActionButton onClick={() => {}} label="In Progress" loading={false} disabled={true} />;
             case 'completed':
-                return <TaskActionButton onClick={handleClaim} label="Claim Reward" loading={isActionLoading('claim')} />;
+                return <TaskActionButton onClick={handleClaim} label="Claim Reward" loading={!!isLoading} />;
             case 'claimed':
-                // Fix: Added missing required 'loading' prop.
-                return <TaskActionButton onClick={() => {}} label="Claimed" disabled={true} success={true} loading={false} />;
-             default:
-                // Fix: Added missing required 'loading' prop.
-                return <TaskActionButton onClick={() => {}} label="In Progress" disabled={true} loading={false} />;
+                return <TaskActionButton onClick={() => {}} label="Reward Claimed" loading={false} success={true} />;
+            default:
+                return <TaskActionButton onClick={() => {}} label={task.status.toUpperCase()} loading={false} disabled={true} />;
         }
     };
 
-
     return (
-        <div className="p-4 h-full">
-            <NeonCard className="h-full">
-                <div className="p-6 flex flex-col h-full overflow-y-auto">
-                    <header className="border-b border-b-[var(--glass-border)] pb-4 mb-4">
-                        <div className="flex justify-between items-center mb-2">
-                             <h2 className="text-2xl font-bold font-orbitron neon-text">{task.template.title}</h2>
-                             <TaskTypeBadge type={task.template.task_type} />
-                        </div>
-                        {/* Fix: Changed status check from 'accepted' to 'in_progress' to match the type definition. */}
-                        {task.template.duration_seconds && task.status === 'in_progress' && (
-                             <div className="flex items-center text-sm text-[var(--neon-pink)]">
-                                <ClockIcon className="h-4 w-4 mr-2"/>
-                                Time limited
-                             </div>
-                        )}
-                    </header>
+        <div className="p-6 h-full flex flex-col">
+            <NeonCard accentColor="purple" className="flex-grow">
+                <div className="p-6 flex flex-col h-full">
+                    <div className="flex justify-between items-start mb-2">
+                        <span className="text-sm font-semibold px-3 py-1 rounded-full bg-[var(--neon-purple)] text-black shadow-lg">
+                            {task.template.task_type.toUpperCase()}
+                        </span>
+                    </div>
+                    <h2 className="text-2xl font-bold font-orbitron mb-2">{task.template.title}</h2>
+                    <p className="text-gray-400 mb-6 flex-grow">{task.template.description}</p>
+                    
+                    <div className="mb-6">
+                        <h4 className="font-bold mb-2 text-gray-300">Progress:</h4>
+                        <TaskProgressBar current={task.progress.current} needed={task.progress.needed} />
+                    </div>
 
-                    <div className="flex-grow">
-                        <p className="text-gray-300 mb-6">{task.template.description}</p>
-                        
-                        {task.progress && (
-                            <div className="mb-6">
-                                <h4 className="text-sm font-semibold uppercase text-gray-400 mb-2">Progress</h4>
-                                <TaskProgressBar current={task.progress.current} needed={task.progress.needed} />
+                    <div className="grid grid-cols-2 gap-4 mb-8">
+                        <div className="bg-[var(--glass)] p-4 rounded-lg text-center">
+                            <p className="text-xs text-gray-400">COINS</p>
+                            <div className="flex items-center justify-center space-x-2 mt-1">
+                                <CoinIcon className="h-6 w-6 text-yellow-400" />
+                                <span className="text-xl font-bold">{task.template.reward_coins}</span>
                             </div>
-                        )}
-                        
-                        <div>
-                            <h4 className="text-sm font-semibold uppercase text-gray-400 mb-2">Rewards</h4>
-                            <div className="flex space-x-4">
-                                <div className="flex items-center p-3 rounded-lg bg-[var(--glass)] border border-[var(--glass-border)]">
-                                    <CoinIcon className="h-8 w-8 text-yellow-400 mr-3"/>
-                                    <div>
-                                        <div className="text-xl font-bold">{task.template.reward_coins}</div>
-                                        <div className="text-xs text-gray-400">Coins</div>
-                                    </div>
-                                </div>
-                                <div className="flex items-center p-3 rounded-lg bg-[var(--glass)] border border-[var(--glass-border)]">
-                                    <XPIcon className="h-8 w-8 text-purple-400 mr-3"/>
-                                    <div>
-                                        <div className="text-xl font-bold">{task.template.reward_xp}</div>
-                                        <div className="text-xs text-gray-400">XP</div>
-                                    </div>
-                                </div>
+                        </div>
+                         <div className="bg-[var(--glass)] p-4 rounded-lg text-center">
+                            <p className="text-xs text-gray-400">XP</p>
+                            <div className="flex items-center justify-center space-x-2 mt-1">
+                                <XPIcon className="h-6 w-6 text-purple-400" />
+                                <span className="text-xl font-bold">{task.template.reward_xp}</span>
                             </div>
                         </div>
                     </div>
                     
-                    <footer className="mt-6 pt-6 border-t border-t-[var(--glass-border)]">
-                       {renderAction()}
-                    </footer>
+                    <div className="mt-auto">
+                       {getAction()}
+                    </div>
                 </div>
             </NeonCard>
         </div>
