@@ -85,14 +85,14 @@ const MOCK_SHOP_ITEMS: ShopItem[] = [
 ];
 
 
-export const login = async (email: string, pass: string): Promise<User | null> => {
-    console.log(`Attempting login for: ${email}`);
+export const login = async (username: string, pass: string): Promise<User | null> => {
+    console.log(`Attempting login for: ${username}`);
     // In a real app, this would be a secure API call with hashing.
-    // For this mock, we check email and plaintext password.
+    // For this mock, we check display_name and plaintext password.
     return new Promise(resolve => {
         setTimeout(() => {
             const user = MOCK_USERS.find(
-                u => u.email.toLowerCase() === email.toLowerCase() && u.password === pass
+                u => u.display_name.toLowerCase() === username.toLowerCase() && u.password === pass
             );
             resolve(user || null);
         }, 500);

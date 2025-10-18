@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { useSound } from '../hooks/useSound';
 
 interface LoginPageProps {
-    onLogin: (email: string, pass: string) => Promise<boolean>;
+    onLogin: (username: string, pass: string) => Promise<boolean>;
 }
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
-    const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -16,7 +16,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         e.preventDefault();
         setError('');
         setLoading(true);
-        const success = await onLogin(email, password);
+        const success = await onLogin(username, password);
         if (!success) {
             setError('Invalid credentials. Access denied.');
             playErrorSound();
@@ -37,15 +37,15 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                         
                         <form onSubmit={handleSubmit}>
                             <div className="mb-4">
-                                <label className="block text-gray-400 text-sm font-bold mb-2" htmlFor="email">
-                                    Agent Email
+                                <label className="block text-gray-400 text-sm font-bold mb-2" htmlFor="username">
+                                    Agent Username
                                 </label>
                                 <input
-                                    id="email"
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="zero@cool.com"
+                                    id="username"
+                                    type="text"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    placeholder="e.g., Sobbi"
                                     className="w-full bg-[var(--bg)] border border-[var(--glass-border)] rounded-lg py-2 px-3 text-white leading-tight focus:outline-none focus:ring-2 focus:ring-[var(--neon-cyan)]"
                                     required
                                 />

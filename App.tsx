@@ -16,8 +16,8 @@ function App() {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [activePage, setActivePage] = useState<Page>('home');
 
-    const handleLogin = useCallback(async (email: string, pass: string): Promise<boolean> => {
-        const user = await gameService.login(email, pass);
+    const handleLogin = useCallback(async (username: string, pass: string): Promise<boolean> => {
+        const user = await gameService.login(username, pass);
         if (user) {
             setCurrentUser(user);
             return true;
