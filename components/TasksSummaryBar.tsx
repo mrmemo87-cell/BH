@@ -1,11 +1,12 @@
-
 import React from 'react';
 import { CoinIcon, XPIcon, StreakIcon } from './icons';
+import RadialGauge from './RadialGauge';
 
 interface TasksSummaryBarProps {
     coinsToday: number;
     xpToday: number;
     streak: number;
+    dailyProgress: { current: number, max: number };
 }
 
 const SummaryItem: React.FC<{ icon: React.ReactNode; value: string | number; label: string }> = ({ icon, value, label }) => (
@@ -19,12 +20,17 @@ const SummaryItem: React.FC<{ icon: React.ReactNode; value: string | number; lab
 );
 
 
-const TasksSummaryBar: React.FC<TasksSummaryBarProps> = ({ coinsToday, xpToday, streak }) => {
+const TasksSummaryBar: React.FC<TasksSummaryBarProps> = ({ coinsToday, xpToday, streak, dailyProgress }) => {
     return (
         <div className="p-4 bg-[var(--panel)] border-b border-[var(--glass-border)]">
-            <div className="flex items-center justify-center space-x-6">
+            <div className="flex items-center justify-around">
                 <SummaryItem icon={<CoinIcon className="h-8 w-8" />} value={coinsToday} label="Coins Today" />
                 <SummaryItem icon={<XPIcon className="h-8 w-8" />} value={xpToday} label="XP Today" />
+                <RadialGauge 
+                    value={dailyProgress.current}
+                    max={dailyProgress.max}
+                    label="Dailies"
+                />
                 <SummaryItem icon={<StreakIcon className="h-8 w-8" />} value={`${streak} Days`} label="Daily Streak" />
             </div>
         </div>

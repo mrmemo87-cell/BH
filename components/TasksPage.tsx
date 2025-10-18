@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { FullUserTask } from '../types';
 import * as taskService from '../services/taskService';
@@ -121,12 +120,27 @@ const TasksPage: React.FC = () => {
             return acc;
         }, { coinsToday: 0, xpToday: 0, streak: 1 });
     }, [tasks]);
+    
+    const dailyProgress = useMemo(() => {
+        const dailyTasks = tasks.filter(t => t.template.task_type === 'daily');
+        const completedDailies = dailyTasks.filter(t => t.status === 'completed' || t.status === 'claimed').length;
+        return { current: completedDailies, max: dailyTasks.length };
+    }, [tasks]);
 
 
     return (
         <div className="container mx-auto mt-4">
-            <TasksSummaryBar coinsToday={summaryStats.coinsToday} xpToday={summaryStats.xpToday} streak={summaryStats.streak} />
-            <TasksFilterBar activeFilter={activeFilter} setActiveFilter={setActiveFilter} />
+            <TasksSummaryBar
+                coinsToday={summaryStats.coinsToday}
+                xpToday={summaryStats.xpToday}
+                streak={summaryStats.streak}
+                dailyProgress={dailyProgress}
+            />
+            <TasksFilterBar 
+                activeFilter={activeFilter}
+                setActiveFilter={setActiveFilter}
+                disabled={!!loadingAction}
+            />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4" style={{ height: 'calc(100vh - 250px)'}}>
                 <div className="md:col-span-1 bg-[var(--panel)] rounded-lg border border-[var(--glass-border)] h-full">
                     {isLoading ? (
@@ -138,6 +152,7 @@ const TasksPage: React.FC = () => {
                             tasks={filteredTasks}
                             onSelectTask={setSelectedTask}
                             selectedTaskId={selectedTask?.id}
+                            disabled={!!loadingAction}
                         />
                     )}
                 </div>
