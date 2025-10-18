@@ -5,7 +5,6 @@ import {
     getAuth,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
-    FirebaseError,
 } from 'firebase/auth';
 import * as firestoreService from '../services/firestoreService';
 
@@ -30,8 +29,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
         try {
             await signInWithEmailAndPassword(auth, email, password);
             playLoginSound();
-        } catch (signInError) {
-            if (signInError instanceof FirebaseError && signInError.code === 'auth/invalid-credential') {
+        } catch (signInError: any) {
+            if (signInError.code === 'auth/invalid-credential') {
                 // User might not exist, so try to create an account
                 try {
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
