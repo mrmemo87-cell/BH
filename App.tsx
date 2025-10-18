@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Profile } from './types';
-import { onAuthStateChanged, User } from 'firebase/auth';
+// FIX: The 'firebase/auth' module is not resolving correctly. Switched to 'firebase/auth/lite'
+import { onAuthStateChanged, User } from 'firebase/auth/lite';
 import { auth } from './firebase';
 import * as firestoreService from './services/firestoreService';
 import LoginPage from './components/LoginPage';
@@ -12,6 +13,7 @@ import LeaderboardPage from './components/LeaderboardPage';
 import HomePage from './components/HomePage';
 import { useSound } from './hooks/useSound';
 import AudioPlayer from './components/AudioPlayer';
+import { seedDatabase } from './services/seedDatabase';
 
 type Page = 'home' | 'profile' | 'tasks' | 'activity' | 'shop' | 'leaderboard';
 
@@ -21,6 +23,14 @@ const App: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [activePage, setActivePage] = useState<Page>('home');
     const playLogoutSound = useSound('error'); // Re-using sound
+
+    useEffect(() => {
+        // This effect runs only once on initial mount to seed the DB
+        const initializeApp = async () => {
+            await seedDatabase();
+        };
+        initializeApp();
+    }, []);
 
     const fetchProfile = useCallback(async (user: User) => {
         setIsLoading(true);

@@ -40,17 +40,21 @@ export const acceptTask = async (taskId: string): Promise<FullUserTask | null> =
     if (taskIndex > -1 && MOCK_TASKS[taskIndex].status === 'available') {
         MOCK_TASKS[taskIndex].status = 'in_progress';
         MOCK_TASKS[taskIndex].accepted_at = new Date().toISOString();
-        // In a real app, you'd update progress here. We'll simulate completion for one task.
-        if(taskId === 't-3') {
-            setTimeout(() => {
-                MOCK_TASKS[taskIndex].status = 'completed';
-                MOCK_TASKS[taskIndex].completed_at = new Date().toISOString();
-            }, 5000); // Auto-complete after 5s for demo
-        }
         return JSON.parse(JSON.stringify(MOCK_TASKS[taskIndex]));
     }
     return null;
 };
+
+export const completeTask = async (taskId: string): Promise<FullUserTask | null> => {
+    const taskIndex = MOCK_TASKS.findIndex(t => t.id === taskId);
+    if (taskIndex > -1 && MOCK_TASKS[taskIndex].status === 'in_progress') {
+        MOCK_TASKS[taskIndex].status = 'completed';
+        MOCK_TASKS[taskIndex].progress.current = MOCK_TASKS[taskIndex].progress.needed;
+        MOCK_TASKS[taskIndex].completed_at = new Date().toISOString();
+        return JSON.parse(JSON.stringify(MOCK_TASKS[taskIndex]));
+    }
+    return null;
+}
 
 export const claimTaskReward = async (taskId: string): Promise<{ coins: number, xp: number, task: FullUserTask } | null> => {
     const taskIndex = MOCK_TASKS.findIndex(t => t.id === taskId);

@@ -1,11 +1,13 @@
 
+
 import React, { useState } from 'react';
 import { useSound } from '../hooks/useSound';
+// FIX: The 'firebase/auth' module is not resolving correctly. Switched to 'firebase/auth/lite'
 import {
-    getAuth,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
-} from 'firebase/auth';
+} from 'firebase/auth/lite';
+import { auth } from '../firebase';
 import * as firestoreService from '../services/firestoreService';
 
 interface LoginPageProps {
@@ -19,7 +21,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     const [error, setError] = useState('');
     const playErrorSound = useSound('error');
     const playLoginSound = useSound('login');
-    const auth = getAuth();
 
     const signInOrSignUp = async () => {
         const email = `${username.toLowerCase().trim()}@brain.heist`;

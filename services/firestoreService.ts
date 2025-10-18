@@ -158,19 +158,8 @@ export const getRecentActivity = async (userId: string): Promise<HackAttempt[]> 
 // --- Shop & Inventory Functions ---
 export const getShopItems = async (): Promise<Item[]> => {
     const itemsRef = collection(db, 'shopItems');
-    let querySnapshot = await getDocs(itemsRef);
+    const querySnapshot = await getDocs(itemsRef);
     
-    if (querySnapshot.empty) {
-        const defaultItems: Omit<Item, 'id'>[] = [
-            { name: 'Firewall Booster', description: 'Increases security by 10 for 1 hour.', icon: '🛡️', cost: 500, effects: [{ name: '+10 Security', description: 'Boosts defense', value: 10, duration_hours: 1 }] },
-            { name: 'Advanced Targeting AI', description: 'Increases hacking by 10 for 1 hour.', icon: '🎯', cost: 500, effects: [{ name: '+10 Hacking', description: 'Boosts offense', value: 10, duration_hours: 1 }] },
-        ];
-        for(const item of defaultItems) {
-            await addDoc(itemsRef, item);
-        }
-        querySnapshot = await getDocs(itemsRef); // Re-fetch
-    }
-
     const items: Item[] = [];
     querySnapshot.forEach((doc) => {
         items.push({ id: doc.id, ...doc.data() } as Item);

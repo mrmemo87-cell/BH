@@ -48,6 +48,16 @@ const TasksPage: React.FC<TasksPageProps> = ({ user, onProfileUpdate }) => {
         setLoadingAction(null);
     };
 
+    const handleCompleteAITask = async (taskId: string) => {
+        setLoadingAction(`complete-${taskId}`);
+        const updatedTask = await taskService.completeTask(taskId);
+        if (updatedTask) {
+            setTasks(prevTasks => prevTasks.map(t => t.id === taskId ? updatedTask : t));
+            setSelectedTask(updatedTask);
+        }
+        setLoadingAction(null);
+    };
+
     const handleClaimReward = async (taskId: string) => {
         setLoadingAction(`claim-${taskId}`);
         const result = await taskService.claimTaskReward(taskId);
@@ -104,6 +114,7 @@ const TasksPage: React.FC<TasksPageProps> = ({ user, onProfileUpdate }) => {
                         task={selectedTask}
                         onAccept={handleAcceptTask}
                         onClaim={handleClaimReward}
+                        onCompleteAITask={handleCompleteAITask}
                         loadingAction={loadingAction}
                     />
                 </div>
