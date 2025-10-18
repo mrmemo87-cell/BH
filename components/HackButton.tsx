@@ -1,49 +1,28 @@
+
 import React from 'react';
-import { useSound } from '../hooks/useSound';
 
 interface HackButtonProps {
-    onHack: () => void;
-    isCooldown: boolean;
+    onClick: () => void;
+    isHacking: boolean;
+    disabled?: boolean;
 }
 
-const HackButton: React.FC<HackButtonProps> = ({ onHack, isCooldown }) => {
-    const playHackSound = useSound('hack');
-
-    const handleClick = () => {
-        if (!isCooldown) {
-            playHackSound();
-            onHack();
-        }
-    };
-    
-    const buttonClasses = `w-full text-center font-extrabold py-4 px-6 rounded-lg text-lg transition-all duration-300 focus:outline-none flex items-center justify-center space-x-2 font-orbitron`;
-    
-    if (isCooldown) {
-        return (
-            <button
-                disabled
-                className={`${buttonClasses} bg-gray-800 border-2 border-gray-700 text-gray-500 cursor-not-allowed`}
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>SYSTEM COOLING DOWN</span>
-            </button>
-        );
-    }
-
+const HackButton: React.FC<HackButtonProps> = ({ onClick, isHacking, disabled }) => {
     return (
         <button
-            onClick={handleClick}
-            className={`${buttonClasses} bg-red-900 border-2 border-red-600 text-red-100 hover:bg-red-700 hover:border-red-400 hover:text-white hover:scale-105 transform`}
-            style={{
-                boxShadow: '0 0 15px rgba(255, 0, 0, 0.4), inset 0 0 5px rgba(255, 100, 100, 0.3)'
-            }}
+            onClick={onClick}
+            disabled={isHacking || disabled}
+            className="text-xs font-bold py-2 px-4 rounded-lg text-black bg-gradient-to-r from-red-500 to-pink-500 hover:scale-105 transition-transform disabled:opacity-60 disabled:cursor-wait"
         >
-             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
-            </svg>
-            <span>INITIATE HACK</span>
+            {isHacking ? (
+                <div className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Hacking...
+                </div>
+            ) : "Hack"}
         </button>
     );
 };

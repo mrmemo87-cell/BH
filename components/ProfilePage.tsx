@@ -1,45 +1,58 @@
-import React from 'react';
-import { User, FullInventoryRow, ActiveEffect, HackAttempt } from '../types';
+import React, { useState, useEffect } from 'react';
+import { Profile, Item, HackAttempt } from '../types';
 import ProfileHeader from './ProfileHeader';
 import StatsRow from './StatsRow';
 import InventoryPanel from './InventoryPanel';
 import ActiveEffects from './ActiveEffects';
 import RecentActivity from './RecentActivity';
-import NeonCard from './NeonCard';
+import * as firestoreService from '../services/firestoreService';
+import { auth } from '../firebase';
 
-// This is now a display component. The data fetching is simulated at a higher level.
-const ProfilePage: React.FC<{ user: User }> = ({ user }) => {
 
-    // In a real app, these would be fetched based on the user prop
-    const [inventory, setInventory] = React.useState<FullInventoryRow[]>([]);
-    const [effects, setEffects] = React.useState<ActiveEffect[]>([]);
-    const [activity, setActivity] = React.useState<HackAttempt[]>([]);
+interface ProfilePageProps {
+    user: Profile;
+    onProfileUpdate: () => void;
+}
 
-    if (!user) {
-        return <div className="text-center text-red-500 mt-8">Could not load profile.</div>;
-    }
+const ProfilePage: React.FC<ProfilePageProps> = ({ user, onProfileUpdate }) => {
+    const [activity, setActivity] = useState<HackAttempt[]>([]);
+
+    useEffect(() => {
+        const fetchActivity = async () => {
+            if (user && user.id) {
+                const userActivity = await firestoreService.getRecentActivity(user.id);
+                setActivity(userActivity);
+            }
+        };
+        fetchActivity();
+    }, [user]);
+    
+    const handleActivateItem = async (item: Item) => {
+        const userId = auth.currentUser?.uid;
+        if (!userId) return;
+
+        try {
+            await firestoreService.activateItem(userId, item);
+            onProfileUpdate();
+        } catch (e) {
+            console.error("Failed to activate item:", e);
+        }
+    };
 
     return (
-        <div className="container mx-auto p-4 space-y-4">
+        <div className="container mx-auto p-4 space-y-6">
             <ProfileHeader profile={user} isCurrentUser={true} />
             <StatsRow profile={user} />
-            
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div className="lg:col-span-2 space-y-4">
-                    <NeonCard>
-                         <div className="p-4">
-                            <h3 className="font-bold text-lg mb-2 font-orbitron neon-text-pink">Bio</h3>
-                            <p className="text-gray-300">{user.bio}</p>
-                        </div>
-                    </NeonCard>
-                    {/* RecentActivity is now on its own page */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                    <InventoryPanel inventory={user.inventory} onActivateItem={handleActivateItem} />
                 </div>
-
-                <div className="space-y-4">
-                     {/* These would be fetched based on the user. For now, they are empty. */}
-                    <ActiveEffects effects={effects} />
-                    <InventoryPanel inventory={inventory} />
+                <div>
+                    <ActiveEffects effects={user.active_effects} />
                 </div>
+            </div>
+             <div>
+                <RecentActivity activity={activity} currentUserId={user.id} />
             </div>
         </div>
     );

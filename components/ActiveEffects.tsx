@@ -1,56 +1,47 @@
-import React, { useState, useEffect } from 'react';
-import { ActiveEffect } from '../types';
+
+import React from 'react';
+import { Effect } from '../types';
 import NeonCard from './NeonCard';
 import { ClockIcon } from './icons';
 
-const formatDuration = (totalSeconds: number) => {
-    if (totalSeconds <= 0) return '00:00:00';
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = Math.floor(totalSeconds % 60);
-    return [hours, minutes, seconds].map(v => v.toString().padStart(2, '0')).join(':');
+const getTimeRemaining = (expiresAt: string): string => {
+    const now = new Date();
+    const expiry = new Date(expiresAt);
+    const diffMs = expiry.getTime() - now.getTime();
+
+    if (diffMs <= 0) return "Expired";
+
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+    return `${hours}h ${minutes}m remaining`;
 };
 
-const EffectItem: React.FC<{ effect: ActiveEffect }> = ({ effect }) => {
-    const calculateRemaining = () => Math.round((new Date(effect.expires_at).getTime() - Date.now()) / 1000);
-    const [remainingSeconds, setRemainingSeconds] = useState(calculateRemaining());
 
-    useEffect(() => {
-        const timer = setInterval(() => {
-            const remaining = calculateRemaining();
-            setRemainingSeconds(remaining);
-            if (remaining <= 0) {
-                clearInterval(timer);
-            }
-        }, 1000);
-        return () => clearInterval(timer);
-    }, [effect.expires_at]);
-
+const ActiveEffects: React.FC<{ effects: Effect[] }> = ({ effects }) => {
     return (
-        <div className="flex justify-between items-center text-sm p-2 bg-[var(--glass)] rounded-md">
-            <div>
-                <span className="font-bold text-white capitalize">{effect.key.replace('_', ' ')}</span>
-                <span className="text-gray-400 text-xs ml-2">({effect.source})</span>
-            </div>
-            <div className="flex items-center font-mono text-xs text-[var(--neon-lime)]">
-                <ClockIcon className="h-3 w-3 mr-1" />
-                {formatDuration(remainingSeconds)}
-            </div>
-        </div>
-    );
-};
-
-const ActiveEffects: React.FC<{ effects: ActiveEffect[] }> = ({ effects }) => {
-    return (
-        <NeonCard>
+        <NeonCard accentColor="lime">
             <div className="p-4">
-                <h3 className="font-bold text-lg mb-3 font-orbitron neon-text-pink">Active Effects</h3>
+                <h3 className="font-bold text-lg mb-3 font-orbitron neon-text-lime">Active Effects</h3>
                 {effects.length > 0 ? (
-                    <div className="space-y-2">
-                        {effects.map(effect => <EffectItem key={effect.id} effect={effect} />)}
+                    <div className="space-y-3">
+                        {effects.map(effect => (
+                            <div key={effect.id} className="p-3 bg-[var(--glass)] border border-[var(--glass-border)] rounded-lg">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <p className="font-semibold text-white">{effect.name}</p>
+                                        <p className="text-xs text-gray-400">{effect.description}</p>
+                                    </div>
+                                     <div className="flex items-center text-xs text-[var(--neon-lime)]">
+                                        <ClockIcon className="h-3 w-3 mr-1" />
+                                        {getTimeRemaining(effect.expires_at)}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 ) : (
-                    <p className="text-sm text-gray-500 text-center py-2">No active effects.</p>
+                     <p className="text-sm text-gray-500 text-center py-2">No active effects.</p>
                 )}
             </div>
         </NeonCard>

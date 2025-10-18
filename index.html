@@ -1,72 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Brain Heist</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Orbitron:wght@400;700;900&display=swap');
-
         :root {
-            --bg: #071020;
-            --panel: #0d1420;
-            --neon-pink: #FF2D91;
-            --neon-cyan: #00D0E8;
-            --neon-lime: #A6FF4D;
-            --neon-purple: #9d5cff;
-            --glass: rgba(255, 255, 255, 0.03);
-            --glow-strong: 0 0 24px var(--neon-cyan);
-            --glass-border: rgba(255, 255, 255, 0.04);
-            font-family: 'Roboto', sans-serif;
+          --bg: #071020;
+          --panel: #0d1420;
+          --neon-pink: #FF2D91;
+          --neon-cyan: #00D0E8;
+          --neon-lime: #A6FF4D;
+          --neon-purple: #9e5fff;
+          --neon-yellow: #f8f84a;
+          --glass: rgba(255,255,255,0.03);
+          --glass-border: rgba(255,255,255,0.04);
         }
-
         body {
             background-color: var(--bg);
-            color: #e0e0e0;
+            color: white;
+            font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            overflow-x: hidden;
         }
-        
-        .font-orbitron {
-            font-family: 'Orbitron', sans-serif;
-        }
-
-        .neon-text {
-            text-shadow: 0 0 4px rgba(0, 208, 232, 0.4), 0 0 10px rgba(0, 208, 232, 0.2);
-        }
-        
-        .neon-text-pink {
-             text-shadow: 0 0 4px rgba(255, 45, 145, 0.4), 0 0 10px rgba(255, 45, 145, 0.2);
-        }
-
-        .neon-shadow-cyan {
-            box-shadow: 0 0 12px rgba(0, 208, 232, 0.3), 0 0 24px rgba(0, 208, 232, 0.2);
-        }
-        
-        .neon-shadow-pink {
-            box-shadow: 0 0 12px rgba(255, 45, 145, 0.3), 0 0 24px rgba(255, 45, 145, 0.2);
-        }
-
-        .btn-neon {
-            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-pink));
-            box-shadow: 0 6px 24px rgba(0, 208, 232, 0.14), 0 0 12px rgba(255, 45, 145, 0.1);
-        }
+        .font-orbitron { font-family: 'Orbitron', monospace, sans-serif; } /* Using a real font name for potential future addition */
+        .neon-text { text-shadow: 0 0 4px var(--neon-cyan), 0 0 8px var(--neon-pink); }
+        .neon-text-pink { text-shadow: 0 0 5px var(--neon-pink), 0 0 10px var(--neon-pink); color: #fff; }
+        .neon-text-lime { text-shadow: 0 0 5px var(--neon-lime), 0 0 10px var(--neon-lime); color: #fff; }
+        .neon-text-purple { text-shadow: 0 0 5px var(--neon-purple), 0 0 10px var(--neon-purple); color: #fff; }
+        .neon-shadow-cyan { box-shadow: 0 0 15px var(--neon-cyan); }
+        .neon-shadow-yellow { box-shadow: 0 0 15px var(--neon-yellow); }
+        .btn-neon { background:linear-gradient(90deg,var(--neon-cyan),var(--neon-pink)); box-shadow: 0 4px 18px rgba(0,208,232,0.14); border-radius:8px; }
     </style>
-<script type="importmap">
-{
-  "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/"
-  }
-}
-</script>
 </head>
 <body>
     <div id="root"></div>
-    <!-- Dummy audio file for demonstration -->
-    <audio id="background-music" loop>
-        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
-    </audio>
+    <audio id="background-music" src="https://storage.googleapis.com/maker-suite-media/prompts/project_music/music_1.mp3" loop></audio>
+    <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.2.0",
+    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+    "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+    "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
+    "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "firebase/": "https://aistudiocdn.com/firebase@^12.4.0/"
+  }
+}
+</script>
     <script type="module" src="/index.tsx"></script>
 </body>
 </html>

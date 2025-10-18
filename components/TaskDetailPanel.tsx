@@ -78,7 +78,8 @@ const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({ task, onAccept, onCla
                              <h2 className="text-2xl font-bold font-orbitron neon-text">{task.template.title}</h2>
                              <TaskTypeBadge type={task.template.task_type} />
                         </div>
-                        {task.template.duration_seconds && task.status === 'accepted' && (
+                        {/* Fix: Changed status check from 'accepted' to 'in_progress' to match the type definition. */}
+                        {task.template.duration_seconds && task.status === 'in_progress' && (
                              <div className="flex items-center text-sm text-[var(--neon-pink)]">
                                 <ClockIcon className="h-4 w-4 mr-2"/>
                                 Time limited

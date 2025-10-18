@@ -1,27 +1,65 @@
 import React, { useState } from 'react';
 import { useSound } from '../hooks/useSound';
+import {
+    getAuth,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    AuthErrorCodes
+} from 'firebase/auth';
+import * as firestoreService from '../services/firestoreService';
 
 interface LoginPageProps {
-    onLogin: (username: string, pass: string) => Promise<boolean>;
+    onLoginSuccess: () => void;
 }
 
-const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
+const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const playErrorSound = useSound('error');
+    const playLoginSound = useSound('login');
+    const auth = getAuth();
+
+    const signInOrSignUp = async () => {
+        const email = `${username.toLowerCase()}@brain.heist`; // Construct an email from username
+        setLoading(true);
+        setError('');
+
+        try {
+            // Try to sign in first
+            await signInWithEmailAndPassword(auth, email, password);
+            playLoginSound();
+        } catch (signInError: any) {
+            // If user not found, try to create a new account
+            if (signInError.code === AuthErrorCodes.USER_DELETED) {
+                 try {
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    // Create a profile in Firestore for the new user
+                    await firestoreService.createUserProfile(userCredential.user.uid, username, username);
+                    playLoginSound();
+                 } catch (signUpError: any) {
+                    setError(signUpError.message);
+                    playErrorSound();
+                 }
+            } else {
+                 setError("Invalid credentials or network error.");
+                 playErrorSound();
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError('');
-        setLoading(true);
-        const success = await onLogin(username, password);
-        if (!success) {
-            setError('Invalid credentials. Access denied.');
+        if (password.length < 6) {
+            setError("Password must be at least 6 characters.");
             playErrorSound();
+            return;
         }
-        setLoading(false);
+        await signInOrSignUp();
     };
 
     return (

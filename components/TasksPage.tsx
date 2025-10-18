@@ -1,163 +1,106 @@
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { FullUserTask } from '../types';
+import { FullUserTask, Profile } from '../types';
 import * as taskService from '../services/taskService';
+import * as profileService from '../services/profileService';
 import TasksSummaryBar from './TasksSummaryBar';
 import TasksFilterBar, { TaskFilter } from './TasksFilterBar';
 import TaskList from './TaskList';
 import TaskDetailPanel from './TaskDetailPanel';
 
-const TasksPage: React.FC = () => {
+interface TasksPageProps {
+    user: Profile;
+    onProfileUpdate: () => void;
+}
+
+const TasksPage: React.FC<TasksPageProps> = ({ user, onProfileUpdate }) => {
     const [tasks, setTasks] = useState<FullUserTask[]>([]);
-    const [selectedTask, setSelectedTask] = useState<FullUserTask | undefined>(undefined);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
     const [activeFilter, setActiveFilter] = useState<TaskFilter>('all');
-    const [loadingAction, setLoadingAction] = useState<string | null>(null);
+    const [selectedTask, setSelectedTask] = useState<FullUserTask | undefined>(undefined);
+    const [loadingAction, setLoadingAction] = useState<string | null>(null); // e.g., "accept-task-1"
 
     const fetchTasks = useCallback(async () => {
-        try {
-            setIsLoading(true);
-            const userTasks = await taskService.getTasksForUser('current_user');
-            setTasks(userTasks);
-            setError(null);
-        } catch (err) {
-            setError('Failed to load tasks.');
-            console.error(err);
-        } finally {
-            setIsLoading(false);
+        setLoading(true);
+        const userTasks = await taskService.getTasksForUser(user.id);
+        setTasks(userTasks);
+        if (!selectedTask && userTasks.length > 0) {
+            setSelectedTask(userTasks[0]);
+        } else if (selectedTask) {
+            // Reselect the task to get its updated state
+            setSelectedTask(userTasks.find(t => t.id === selectedTask.id));
         }
-    }, []);
+        setLoading(false);
+    }, [user.id, selectedTask]);
 
     useEffect(() => {
         fetchTasks();
-    }, [fetchTasks]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handleAcceptTask = async (taskId: string) => {
         setLoadingAction(`accept-${taskId}`);
-        try {
-            // Optimistic update
-            const originalTasks = tasks;
-            const taskToAccept = tasks.find(t => t.id === taskId);
-            if (taskToAccept) {
-                 const optimisticTask: FullUserTask = {
-                    ...taskToAccept,
-                    status: 'accepted',
-                    accepted_at: new Date().toISOString(),
-                    progress: { current: 0, needed: taskToAccept.template.slug.includes('login') ? 1 : taskToAccept.template.slug.includes('hack-2') ? 2 : 5 }
-                };
-                 if (optimisticTask.template.slug === 'daily-login') {
-                    optimisticTask.status = 'completed';
-                    optimisticTask.completed_at = new Date().toISOString();
-                }
-
-                setTasks(prevTasks => prevTasks.map(t => t.id === taskId ? optimisticTask : t));
-                if (selectedTask?.id === taskId) {
-                    setSelectedTask(optimisticTask);
-                }
-            }
-
-            const updatedTask = await taskService.acceptTask(taskId);
+        const updatedTask = await taskService.acceptTask(taskId);
+        if (updatedTask) {
             setTasks(prevTasks => prevTasks.map(t => t.id === taskId ? updatedTask : t));
-             if (selectedTask?.id === taskId) {
-                setSelectedTask(updatedTask);
-            }
-        } catch (err) {
-            console.error('Failed to accept task', err);
-            // Rollback on error
-            fetchTasks();
-        } finally {
-            setLoadingAction(null);
+            setSelectedTask(updatedTask);
         }
+        setLoadingAction(null);
     };
 
     const handleClaimReward = async (taskId: string) => {
         setLoadingAction(`claim-${taskId}`);
-        try {
-            // Optimistic update
-            const originalTasks = tasks;
-            const taskToClaim = tasks.find(t => t.id === taskId);
-            if (taskToClaim) {
-                const optimisticTask: FullUserTask = {...taskToClaim, status: 'claimed' };
-                setTasks(prevTasks => prevTasks.map(t => t.id === taskId ? optimisticTask : t));
-                if (selectedTask?.id === taskId) {
-                    setSelectedTask(optimisticTask);
-                }
-            }
-            
-            const { task: updatedTask } = await taskService.claimTaskReward(taskId);
-            setTasks(prevTasks => prevTasks.map(t => t.id === taskId ? updatedTask : t));
-             if (selectedTask?.id === taskId) {
-                setSelectedTask(updatedTask);
-            }
-        } catch (err) {
-            console.error('Failed to claim reward', err);
-            fetchTasks(); // Rollback
-        } finally {
-            setLoadingAction(null);
+        const result = await taskService.claimTaskReward(taskId);
+        if (result) {
+            await profileService.updateCurrentUserRewards(result.coins, result.xp);
+            setTasks(prevTasks => prevTasks.map(t => t.id === taskId ? result.task : t));
+            setSelectedTask(result.task);
+            onProfileUpdate(); // Notify App.tsx to refetch profile
         }
+        setLoadingAction(null);
     };
     
-    const sortedTasks = useMemo(() => {
-        const statusOrder: Record<string, number> = { available: 1, accepted: 2, in_progress: 3, completed: 4, claimed: 5, failed: 6, expired: 7 };
-        return [...tasks].sort((a, b) => statusOrder[a.status] - statusOrder[b.status]);
-    }, [tasks]);
-
-
     const filteredTasks = useMemo(() => {
-        if (activeFilter === 'all') return sortedTasks;
-        return sortedTasks.filter(task => task.template.task_type === activeFilter);
-    }, [sortedTasks, activeFilter]);
-    
-    const summaryStats = useMemo(() => {
-        return tasks.reduce((acc, task) => {
-            if (task.status === 'claimed' && task.template.task_type === 'daily') {
-                acc.coinsToday += task.template.reward_coins;
-                acc.xpToday += task.template.reward_xp;
-            }
-            if (task.status === 'claimed' && task.template.task_type === 'daily' && task.streak_day) {
-                 acc.streak = Math.max(acc.streak, task.streak_day);
-            }
-            return acc;
-        }, { coinsToday: 0, xpToday: 0, streak: 1 });
-    }, [tasks]);
-    
-    const dailyProgress = useMemo(() => {
-        const dailyTasks = tasks.filter(t => t.template.task_type === 'daily');
-        const completedDailies = dailyTasks.filter(t => t.status === 'completed' || t.status === 'claimed').length;
-        return { current: completedDailies, max: dailyTasks.length };
-    }, [tasks]);
+        if (activeFilter === 'all') return tasks;
+        return tasks.filter(task => task.template.task_type === activeFilter);
+    }, [tasks, activeFilter]);
 
+    // Dummy data for summary bar
+    const summaryData = {
+        coinsToday: 150,
+        xpToday: 300,
+        streak: 5,
+        dailyProgress: {
+            current: tasks.filter(t => t.template.task_type === 'daily' && t.status === 'claimed').length,
+            max: tasks.filter(t => t.template.task_type === 'daily').length
+        }
+    };
 
     return (
-        <div className="container mx-auto mt-4">
-            <TasksSummaryBar
-                coinsToday={summaryStats.coinsToday}
-                xpToday={summaryStats.xpToday}
-                streak={summaryStats.streak}
-                dailyProgress={dailyProgress}
-            />
-            <TasksFilterBar 
-                activeFilter={activeFilter}
-                setActiveFilter={setActiveFilter}
-                disabled={!!loadingAction}
-            />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4" style={{ height: 'calc(100vh - 250px)'}}>
-                <div className="md:col-span-1 bg-[var(--panel)] rounded-lg border border-[var(--glass-border)] h-full">
-                    {isLoading ? (
-                        <div className="flex items-center justify-center h-full">Loading tasks...</div>
-                    ) : error ? (
-                        <div className="flex items-center justify-center h-full text-red-500">{error}</div>
-                    ) : (
-                        <TaskList
-                            tasks={filteredTasks}
-                            onSelectTask={setSelectedTask}
-                            selectedTaskId={selectedTask?.id}
-                            disabled={!!loadingAction}
-                        />
-                    )}
+        <div className="h-[calc(100vh-4rem)] flex flex-col">
+            <TasksSummaryBar {...summaryData} />
+            <div className="flex-grow grid grid-cols-1 md:grid-cols-3 min-h-0">
+                <div className="md:col-span-1 flex flex-col border-r border-r-[var(--glass-border)] min-h-0">
+                    <TasksFilterBar 
+                        activeFilter={activeFilter} 
+                        setActiveFilter={setActiveFilter} 
+                        disabled={loading}
+                    />
+                    <div className="flex-grow min-h-0">
+                        {loading ? (
+                            <div className="text-center py-10">Loading tasks...</div>
+                        ) : (
+                            <TaskList
+                                tasks={filteredTasks}
+                                onSelectTask={setSelectedTask}
+                                selectedTaskId={selectedTask?.id}
+                                disabled={loadingAction !== null}
+                            />
+                        )}
+                    </div>
                 </div>
-                <div className="md:col-span-2 bg-[var(--panel)] rounded-lg border border-[var(--glass-border)] h-full">
-                    <TaskDetailPanel
+                <div className="md:col-span-2 min-h-0">
+                     <TaskDetailPanel
                         task={selectedTask}
                         onAccept={handleAcceptTask}
                         onClaim={handleClaimReward}

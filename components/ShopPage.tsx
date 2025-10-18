@@ -1,59 +1,84 @@
 import React, { useState, useEffect } from 'react';
-import { ShopItem } from '../types';
-import * as gameService from '../services/gameService';
+import { Item } from '../types';
+import * as firestoreService from '../services/firestoreService';
+import { auth } from '../firebase';
 import NeonCard from './NeonCard';
 import { CoinIcon } from './icons';
 import { useSound } from '../hooks/useSound';
 
-const ShopPage: React.FC = () => {
-    const [items, setItems] = useState<ShopItem[]>([]);
-    const [loading, setLoading] = useState(true);
-    const playBuySound = useSound('claim');
+interface ShopPageProps {
+    onPurchase: () => void;
+}
+
+const ShopPage: React.FC<ShopPageProps> = ({ onPurchase }) => {
+    const [items, setItems] = useState<Item[]>([]);
+    const [loading, setLoading] = useState<string | null>(null);
+    const [feedback, setFeedback] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+
+    const playPurchaseSound = useSound('purchase');
+    const playErrorSound = useSound('error');
 
     useEffect(() => {
         const fetchItems = async () => {
-            setLoading(true);
-            const shopItems = await gameService.getShopItems();
+            const shopItems = await firestoreService.getShopItems();
             setItems(shopItems);
-            setLoading(false);
         };
         fetchItems();
     }, []);
 
-    const handleBuy = (item: ShopItem) => {
-        console.log(`Buying ${item.title}`);
-        playBuySound();
-        // Here you would call an RPC to handle the purchase
-    };
+    const handlePurchase = async (item: Item) => {
+        const userId = auth.currentUser?.uid;
+        if (!userId) return;
 
-    if (loading) {
-        return <div className="text-center p-8">Loading shop items...</div>;
-    }
+        setLoading(item.id);
+        setFeedback(null);
+        
+        try {
+            await firestoreService.buyItem(userId, item);
+            setFeedback({ type: 'success', message: `Successfully purchased ${item.name}!` });
+            playPurchaseSound();
+            onPurchase(); // Notify app to update profile
+        } catch (e: any) {
+             setFeedback({ type: 'error', message: e.message || 'Purchase failed.' });
+             playErrorSound();
+        }
+
+        setLoading(null);
+        setTimeout(() => setFeedback(null), 3000);
+    };
 
     return (
         <div className="container mx-auto p-4">
-             <header className="text-center my-6">
-                <h1 className="text-4xl font-extrabold font-orbitron neon-text">THE ARSENAL</h1>
-                <p className="text-md text-gray-400 mt-1">Spend your coins on upgrades and cosmetics.</p>
-            </header>
+            <h1 className="text-3xl font-bold font-orbitron text-center my-6 neon-text">THE ARSENAL</h1>
+            {feedback && (
+                <div className={`text-center p-2 rounded-lg mb-4 ${feedback.type === 'success' ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-400'}`}>
+                    {feedback.message}
+                </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {items.map(item => (
-                    <NeonCard key={item.id} accentColor={item.item_type === 'cosmetic' ? 'pink' : 'cyan'}>
-                        <div className="p-5 flex flex-col h-full">
-                            <div className="flex-grow">
-                                <div className="text-5xl mb-4 text-center">{item.icon}</div>
-                                <h3 className="font-bold text-xl text-center font-orbitron">{item.title}</h3>
-                                <p className="text-sm text-gray-400 text-center my-2 h-16">{item.description}</p>
+                    <NeonCard key={item.id}>
+                        <div className="p-4 flex flex-col h-full">
+                            <div className="text-5xl text-center mb-4">{item.icon}</div>
+                            <h3 className="text-lg font-bold text-center">{item.name}</h3>
+                            <p className="text-sm text-gray-400 text-center flex-grow my-2">{item.description}</p>
+                            <div className="my-4">
+                                {item.effects.map((effect, i) => (
+                                    <p key={i} className="text-xs text-center text-[var(--neon-lime)]">{effect.name}</p>
+                                ))}
                             </div>
-                            <div className="mt-4">
-                                <button 
-                                    onClick={() => handleBuy(item)}
-                                    className="w-full btn-neon font-bold py-3 px-4 rounded-lg text-black flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
-                                >
-                                    <CoinIcon className="h-5 w-5" />
-                                    <span>Buy for {item.price}</span>
-                                </button>
-                            </div>
+                            <button
+                                onClick={() => handlePurchase(item)}
+                                disabled={!!loading}
+                                className="w-full mt-auto font-bold py-3 px-6 rounded-lg text-black transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-opacity-50 btn-neon hover:scale-105 disabled:opacity-50"
+                            >
+                                {loading === item.id ? 'Processing...' : (
+                                    <div className="flex items-center justify-center">
+                                        <CoinIcon className="h-5 w-5 mr-2" />
+                                        {item.cost.toLocaleString()}
+                                    </div>
+                                )}
+                            </button>
                         </div>
                     </NeonCard>
                 ))}
