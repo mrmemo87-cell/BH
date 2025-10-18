@@ -1,0 +1,69 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Brain Heist</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Orbitron:wght@400;700;900&display=swap');
+
+        :root {
+            --bg: #071020;
+            --panel: #0d1420;
+            --neon-pink: #FF2D91;
+            --neon-cyan: #00D0E8;
+            --neon-lime: #A6FF4D;
+            --neon-purple: #9d5cff;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glow-strong: 0 0 24px var(--neon-cyan);
+            --glass-border: rgba(255, 255, 255, 0.04);
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: #e0e0e0;
+        }
+        
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .neon-text {
+            text-shadow: 0 0 4px rgba(0, 208, 232, 0.4), 0 0 10px rgba(0, 208, 232, 0.2);
+        }
+        
+        .neon-text-pink {
+             text-shadow: 0 0 4px rgba(255, 45, 145, 0.4), 0 0 10px rgba(255, 45, 145, 0.2);
+        }
+
+        .neon-shadow-cyan {
+            box-shadow: 0 0 12px rgba(0, 208, 232, 0.3), 0 0 24px rgba(0, 208, 232, 0.2);
+        }
+        
+        .neon-shadow-pink {
+            box-shadow: 0 0 12px rgba(255, 45, 145, 0.3), 0 0 24px rgba(255, 45, 145, 0.2);
+        }
+
+        .btn-neon {
+            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-pink));
+            box-shadow: 0 6px 24px rgba(0, 208, 232, 0.14), 0 0 12px rgba(255, 45, 145, 0.1);
+        }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/"
+  }
+}
+</script>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+</body>
+</html>

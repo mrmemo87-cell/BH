@@ -1,0 +1,5 @@
+{
+  "name": "Brain Heist: Tasks Dashboard",
+  "description": "A competitive, PvP-lite social hacking heist experience where players complete tasks, climb leaderboards, and build their profile. This application specifically implements the user's task management dashboard with a futuristic neon aesthetic.",
+  "requestFramePermissions": []
+}
